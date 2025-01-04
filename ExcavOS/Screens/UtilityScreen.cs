@@ -44,9 +44,9 @@ namespace IngameScript {
                     if (_screenContext.utilitymanager.Status == "") {
                         float pitch = _screenContext.utilitymanager.GravityAlignPitch;
                         string status;
-                        if (pitch == 0) status = "(Level)";
-                        else if (pitch == 90) status = "(Up)";
-                        else if (pitch == -90) status = "(Down)";
+                        if (pitch == 0) status = "[Level]";
+                        else if (pitch == 90) status = "[Up]";
+                        else if (pitch == -90) status = "[Down]";
                         else status = string.Format("({0}°)", pitch);
                         Painter.TextEx(new Vector2(Painter.Width - margin, position.Y), (_screenContext.utilitymanager.GravityAlign ? Painter.PrimaryColor : Painter.SecondaryColor), string.Format("{0} {1}", (_screenContext.utilitymanager.GravityAlign ? "On" : "Off"), status), fontSize, TextAlignment.RIGHT);
                     }
@@ -60,10 +60,10 @@ namespace IngameScript {
 
                     Painter.Text(position, "Cruise Control", fontSize, TextAlignment.LEFT);
                     if (_screenContext.utilitymanager.CruiseEnabled) {
-                        Painter.TextEx(new Vector2(Painter.Width - margin, position.Y), Painter.PrimaryColor, string.Format("On ({0} m/s)", _screenContext.utilitymanager.CruiseTarget), fontSize, TextAlignment.RIGHT);
+                        Painter.TextEx(new Vector2(Painter.Width - margin, position.Y), Painter.PrimaryColor, string.Format("On [{0} m/s]", _screenContext.utilitymanager.CruiseTarget), fontSize, TextAlignment.RIGHT);
                     }
                     else {
-                        Painter.TextEx(new Vector2(Painter.Width - margin, position.Y), Painter.SecondaryColor, string.Format("Off ({0} m/s)", _screenContext.utilitymanager.CruiseTarget), fontSize, TextAlignment.RIGHT);
+                        Painter.TextEx(new Vector2(Painter.Width - margin, position.Y), Painter.SecondaryColor, string.Format("Off [{0} m/s]", _screenContext.utilitymanager.CruiseTarget), fontSize, TextAlignment.RIGHT);
                     }
 
 

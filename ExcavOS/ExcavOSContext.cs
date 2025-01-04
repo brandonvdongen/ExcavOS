@@ -63,7 +63,9 @@ namespace IngameScript {
                 string[] args = argument.Split(' ');
                 switch (args[0].ToLower()) {
                     case "toggle_gaa":
-                        utilitymanager.GravityAlign = !utilitymanager.GravityAlign;
+                        if (args[1].ToLower() == "on") utilitymanager.GravityAlign = true;
+                        if (args[1].ToLower() == "off") utilitymanager.GravityAlign = false;
+                        else utilitymanager.GravityAlign = !utilitymanager.GravityAlign;
                         break;
                     case "set_gaa_pitch":
                         char modifier = args[1][0];
@@ -77,7 +79,9 @@ namespace IngameScript {
                         utilitymanager.GravityAlignPitch = MathHelper.Clamp(utilitymanager.GravityAlignPitch, -90, 90);
                         break;
                     case "toggle_cruise":
-                        utilitymanager.CruiseEnabled = !utilitymanager.CruiseEnabled;
+                        if (args[1].ToLower() == "on") utilitymanager.CruiseEnabled = true;
+                        if (args[1].ToLower() == "off") utilitymanager.CruiseEnabled = false;
+                        else utilitymanager.CruiseEnabled = !utilitymanager.CruiseEnabled;
                         if (!utilitymanager.CruiseEnabled) {
                             thrusterManager.forward.thrusters.ForEach(thruster => { thruster.ThrustOverridePercentage = 0.0f; thruster.Enabled = true; });
                             thrusterManager.backward.thrusters.ForEach(thruster => { thruster.ThrustOverridePercentage = 0.0f; thruster.Enabled = true; });

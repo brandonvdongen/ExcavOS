@@ -17,21 +17,18 @@ using VRage.Game;
 using VRage;
 using VRageMath;
 
-namespace IngameScript
-{
-    partial class Program
-    {
-        public class ExcavOS : ScriptHandler
-        {
+namespace IngameScript {
+    partial class Program {
+        public class ExcavOS : ScriptHandler {
 
             protected ExcavOSContext _context;
             private readonly BlockFinder<IMyTerminalBlock> _surfaceProviders;
             private Dictionary<long, RegisteredProvider> _registeredProviders = new Dictionary<long, RegisteredProvider>();
 
-            public ExcavOS(Program program, MyIni storage) : base(program, storage,  "ExcavOS", "0.2")
-            {
-                _surfaceProviders = new BlockFinder<IMyTerminalBlock>(program);
+            public ExcavOS(Program program, MyIni storage) : base(program, storage, "ExcavOS", "0.2") {
                 _context = new ExcavOSContext(program, _config, _storage);
+                _surfaceProviders = new BlockFinder<IMyTerminalBlock>(_context);
+
                 Initialize();
             }
 
@@ -39,65 +36,55 @@ namespace IngameScript
                 _context.Save();
             }
 
-            public override void FetchBlocks()
-            {
+            public override void FetchBlocks() {
                 FetchSurfaces();
             }
 
-            private void FetchSurfaces()
-            {
-                _surfaceProviders.FindBlocks(true, block =>
-                {
+            private void FetchSurfaces() {
+                _surfaceProviders.FindBlocks(true, block => {
 
-                    if (!(block is IMyTextSurfaceProvider))
-                    {
+                    if (!(block is IMyTextSurfaceProvider)) {
                         return false;
                     }
 
-                    if (!MyIni.HasSection(block.CustomData, _scriptName))
-                    {
-                         return false;
+                    if (!MyIni.HasSection(block.CustomData, _scriptName)) {
+                        return false;
                     }
 
                     RegisteredProvider registeredProvider;
                     if (!_registeredProviders.ContainsKey(block.EntityId)) {
                         registeredProvider = new RegisteredProvider(_context, block, _ini, _scriptName);
                         _registeredProviders.Add(block.EntityId, registeredProvider);
-                    } else {
+                    }
+                    else {
                         registeredProvider = _registeredProviders[block.EntityId];
                     }
 
-                    if (block == _program.Me)
-                    {
+                    if (block == _program.Me) {
                         registeredProvider.SetScreenHandlerForSurface(ExcavOSScreen.SCREEN_NAME, 0);
                     }
-                    else
-                    {
+                    else {
                         registeredProvider.LoadConfig(block.CustomData);
                     }
 
-                    if (!registeredProvider.HasSurfaces())
-                    {
+                    if (!registeredProvider.HasSurfaces()) {
                         _registeredProviders.Remove(block.EntityId);
                     }
 
-                    return true;                   
+                    return true;
 
                 });
 
             }
 
-            protected override void Update10()
-            {
+            protected override void Update10() {
                 _context.Update(_timeAccumulator);
-                foreach (var registeredProvider in _registeredProviders.Values)
-                {
+                foreach (var registeredProvider in _registeredProviders.Values) {
                     registeredProvider.Update();
                 }
             }
 
-            protected override void HandleCommand(string argument)
-            {
+            protected override void HandleCommand(string argument) {
                 _context.HandleCommand(argument);
             }
 

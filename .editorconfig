@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# IDE2002: Consecutive braces must not have blank line between them
+dotnet_diagnostic.IDE2002.severity = suggestion

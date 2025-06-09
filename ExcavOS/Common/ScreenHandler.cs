@@ -17,23 +17,18 @@ using VRage.Game;
 using VRage;
 using VRageMath;
 
-namespace IngameScript
-{
-    partial class Program
-    {
-        abstract public class ScreenHandler<T>
-        {
+namespace IngameScript {
+    partial class Program {
+        abstract public class ScreenHandler<T> {
             public const string SCREEN_NAME = "BlankScreen";
-            protected readonly T _context;
-            public ScreenHandler(T context)
-            {
-                _context = context;
+            protected readonly T _screenContext;
+            public ScreenHandler(T context) {
+                _screenContext = context;
             }
 
             public abstract void Draw(IMyTextSurface surface);
 
-            public virtual bool ShouldDispose()
-            {
+            public virtual bool ShouldDispose() {
                 return false;
             }
         }

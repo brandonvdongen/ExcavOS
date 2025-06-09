@@ -59,14 +59,14 @@ namespace IngameScript
                     Vector2 position = new Vector2(margin, margin);
                     Vector2 barSize = new Vector2(Painter.Width - margin * 2, Painter.Width >= 512.0f ? 2.0f : 1.0f);
 
-                    if (!_context._cargoManager.hasAnyOre)
+                    if (!_screenContext.cargoManager.hasAnyOre)
                     {
                         Painter.SpriteCentered(Painter.Center, new Vector2(128f, 128f), "MyObjectBuilder_Ore/Stone", Painter.SecondaryColor);
                         Painter.Text(Painter.Center, "No ores");
                         return;
                     }
 
-                    _context._cargoManager.IterateCargoDescending((name, entry) => {
+                    _screenContext.cargoManager.IterateCargoDescending((name, entry) => {
                         if (entry.typeid != "MyObjectBuilder_Ore")
                         {
                             return;

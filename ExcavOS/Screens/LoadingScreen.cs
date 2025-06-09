@@ -32,9 +32,9 @@ namespace IngameScript
 
             public LoadingScreen(ExcavOSContext context) : base(context)
             {
-                loadingStart = _context.TimeAccumulator.TotalSeconds;
-                loadingTime = 1.0 + _context.Randomizer.Next(1000, 2000) / 1000.0;
-                quotesPerLoading = _context.Randomizer.Next(2, 8);
+                loadingStart = _screenContext.TimeAccumulator.TotalSeconds;
+                loadingTime = 1.0 + _screenContext.Randomizer.Next(1000, 2000) / 1000.0;
+                quotesPerLoading = _screenContext.Randomizer.Next(2, 8);
             }
 
             private string GetInitializationSimsLikeText(double progress)
@@ -58,7 +58,7 @@ namespace IngameScript
                 };
                 if (currentQuote != quoteNumber)
                 {
-                    int quoteIndex = _context.Randomizer.Next(0, quotes.Length);
+                    int quoteIndex = _screenContext.Randomizer.Next(0, quotes.Length);
                     quote = quotes[quoteIndex];
                 }
 
@@ -71,7 +71,7 @@ namespace IngameScript
                 using (var frame = surface.DrawFrame())
                 {
                     Painter.SetCurrentSurfaceAndFrame(surface, frame);
-                    float value = (float)((_context.TimeAccumulator.TotalSeconds - loadingStart) / loadingTime);
+                    float value = (float)((_screenContext.TimeAccumulator.TotalSeconds - loadingStart) / loadingTime);
                     float margin = 20.0f;
                     float bottomYPos = Painter.AvailableSize.Y - margin;
                     
@@ -84,7 +84,7 @@ namespace IngameScript
 
             public override bool ShouldDispose()
             {
-                return _context.TimeAccumulator.TotalSeconds - loadingStart > loadingTime;
+                return _screenContext.TimeAccumulator.TotalSeconds - loadingStart > loadingTime;
             }
         }
     }

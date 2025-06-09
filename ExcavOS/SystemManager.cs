@@ -21,43 +21,87 @@ namespace IngameScript {
     partial class Program {
         public class SystemManager {
 
-            public string Status;
-            private Program _program;
-            private Config _config;
+            //public string Status;
+            private readonly ExcavOSContext _context;
+            //private Config _config;
+            public ShipState ShipState { get { return _shipState; } }
 
+            private ShipState _shipState = ShipState.isIdle;
             private readonly BlockFinder<IMyGyro> _gyros;
             private readonly BlockFinder<IMyShipController> _controllers;
+            private readonly BlockFinder<IMyParachute> _parachutes;
+            private readonly BlockFinder<IMyGasTank> _gasTanks;
+            private readonly BlockFinder<IMyBatteryBlock> _batteries;
+            private readonly BlockFinder<IMyThrust> _thrusters;
+            private readonly BlockFinder<IMyShipConnector> _connectors;
             private IMyShipController _controller;
-
-            private readonly BlockFinder<IMyThrust> _liftThrusters;
-            private readonly BlockFinder<IMyThrust> _cruiseThrusters;
-            private readonly BlockFinder<IMyThrust> _cruiseReverseThrusters;
-            private readonly BlockFinder<IMyThrust> _stopThrusters;
+            private IMyParachute _parachute;
 
             public IMyShipController ActiveController { get { return _controller; } }
-            public List<IMyThrust> LiftThrusters { get { return _liftThrusters.blocks; } }
-            public List<IMyThrust> StopThrusters { get { return _stopThrusters.blocks; } }
-            public List<IMyThrust> CruiseThrusters { get { return _cruiseThrusters.blocks; } }
-            public List<IMyThrust> CruiseReverseThrusters { get { return _cruiseReverseThrusters.blocks; } }
 
-            public SystemManager(Program program, Config config) {
-                _program = program;
-                _config = config;
-                _gyros = new BlockFinder<IMyGyro>(_program);
-                _controllers = new BlockFinder<IMyShipController>(_program);
-                _liftThrusters = new BlockFinder<IMyThrust>(_program);
-                _stopThrusters = new BlockFinder<IMyThrust>(_program);
-                _cruiseThrusters = new BlockFinder<IMyThrust>(_program);
-                _cruiseReverseThrusters = new BlockFinder<IMyThrust>(_program);
+            public IMyParachute Parachute { get { return _parachute; } }
+            public SystemManager(ExcavOSContext context) {
+                _context = context;
+                _gyros = new BlockFinder<IMyGyro>(_context);
+                _controllers = new BlockFinder<IMyShipController>(_context);
+                _thrusters = new BlockFinder<IMyThrust>(_context);
+                _connectors = new BlockFinder<IMyShipConnector>(_context);
+                _parachutes = new BlockFinder<IMyParachute>(_context);
+                _gasTanks = new BlockFinder<IMyGasTank>(_context);
+                _batteries = new BlockFinder<IMyBatteryBlock>(_context);
             }
 
             public void Update() {
                 UpdateController();
                 UpdateThrusterGroups();
+                UpdateShipState();
+                UpdateParachute();
             }
+
+            public void UpdateShipState() {
+                _connectors.FindBlocks(true);
+                _gasTanks.FindBlocks(true);
+                _batteries.FindBlocks(true);
+
+                if (ActiveController.IsUnderControl) {
+                    _shipState = ShipState.isControlled;
+                }
+                else {
+                    if (_context.systemManager.ActiveController.CalculateShipMass().PhysicalMass == 0) {
+                        _shipState = ShipState.isStatic;
+                    }
+                    else {
+                        _shipState = ShipState.isIdle;
+                        foreach (var block in _connectors.blocks) {
+                            if (block.OtherConnector != null && block.Status == MyShipConnectorStatus.Connected) {
+                                if (block.OtherConnector.CustomData.Contains(_context.config.DockTag)) {
+                                    _shipState = ShipState.isDocked;
+                                }
+                            }
+                        }
+                    }
+                }
+                foreach (var block in _gasTanks.blocks) {
+                    if (_shipState == ShipState.isDocked) {
+                        block.Stockpile = true;
+                    }
+                    else {
+                        block.Stockpile = false;
+                    }
+                }
+                foreach (var block in _batteries.blocks) {
+                    if (_shipState == ShipState.isDocked) {
+                        block.ChargeMode = ChargeMode.Recharge;
+                    }
+                    else {
+                        block.ChargeMode = ChargeMode.Auto;
+                    }
+                }
+            }
+
             private void UpdateController() {
                 IMyShipController firstWorking = null;
-                _controllers.FindBlocks(true, null, "");
+                _controllers.FindBlocks(true);
                 foreach (IMyShipController _controller in _controllers.blocks) {
                     if (!_controller.IsWorking) continue;
                     if (firstWorking == null) firstWorking = _controller;
@@ -70,49 +114,29 @@ namespace IngameScript {
                     throw new Exception("Missing Controller!");
                 }
             }
+
+            private void UpdateParachute() {
+                if (_parachute != null && _parachute.IsWorking) return;
+                _parachutes.FindBlocks(true);
+                _parachute = _parachutes.GetFirstWorking();
+            }
+
             private void UpdateThrusterGroups() {
                 if (_controller == null) return;
-                if (_config.LiftThrustersGroupName != "") {
-                    _liftThrusters.FindBlocks(true, null, _config.LiftThrustersGroupName);
-                }
-                else {
-                    _liftThrusters.FindBlocks(true, thruster => {
-                        Vector3D thrusterDirection = -thruster.WorldMatrix.Forward;
-                        //double forwardDot = Vector3D.Dot(thrusterDirection, _controller.WorldMatrix.Forward);
-                        double upDot = Vector3D.Dot(thrusterDirection, -Vector3.Normalize(_controller.GetTotalGravity()));
-                        //double leftDot = Vector3D.Dot(thrusterDirection, _controller.WorldMatrix.Left);
 
-                        if (upDot >= 0.2) {
-                            return true;
-                        }
-                        return false;
-                    });
-                }
-                if (_config.StopThrustersGroupName != "") {
-                    _stopThrusters.FindBlocks(true, null, _config.StopThrustersGroupName);
-                }
-                else {
-                    _stopThrusters.FindBlocks(true, thruster => {
-                        Vector3D thrusterDirection = -thruster.WorldMatrix.Forward;
-                        double forwardDot = Vector3D.Dot(thrusterDirection, _controller.GetShipVelocities().LinearVelocity);
-                        //double upDot = Vector3D.Dot(thrusterDirection, _controller.WorldMatrix.Up);
-                        //double leftDot = Vector3D.Dot(thrusterDirection, _controller.WorldMatrix.Left);
-
-                        if (forwardDot <= -0.7) {
-                            return true;
-                        }
-                        return false;
-                    });
-                }
-                _cruiseThrusters.FindBlocks(true, thruster => {
-                    var facing = thruster.Orientation.TransformDirection(Base6Directions.Direction.Forward);
-                    return facing == Base6Directions.Direction.Backward;
+                _context.thrusterManager.ClearAll();
+                _thrusters.FindBlocks(true, thruster => {
+                    _context.thrusterManager.Add(thruster, _controller);
+                    return true;
                 });
-                _cruiseReverseThrusters.FindBlocks(true, thruster => {
-                    var facing = thruster.Orientation.TransformDirection(Base6Directions.Direction.Forward);
-                    return facing == Base6Directions.Direction.Forward;
-                });
+                _context.thrusterManager?.UpdateAll();
             }
+        }
+        public enum ShipState {
+            isDocked,
+            isControlled,
+            isIdle,
+            isStatic
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using Sandbox.Game.EntityComponents;
-using Sandbox.ModAPI.Ingame;
+﻿using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
 using System.Collections.Generic;
@@ -16,28 +15,21 @@ using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Game;
 using VRage;
 using VRageMath;
+using static IngameScript.Program.ThrusterManager;
 
-namespace IngameScript
-{
-    partial class Program
-    {
-        public class WeightAnalizer
-        {
-            private Program _program;
-            private Config _config;
+namespace IngameScript {
+    internal partial class Program {
+        public class WeightAnalizer {
+            private readonly ExcavOSContext _context;
             public string Status;
-            private CargoManager _cargoManager;
-            private SystemManager _systemManager;
-            
-            public float LiftThrustNeeded;
-            public float LiftThrustAvailable;
+
+            public float LiftThrustUsage;
             public float StoppingDistance;
             public float StoppingTime;
             public float CapacityDelta;
             public bool StopThrustersWarning = false;
 
-            protected struct WeightPoint
-            {
+            protected struct WeightPoint {
                 public double time;
                 public double capacity;
             }
@@ -45,109 +37,83 @@ namespace IngameScript
             private WeightPoint[] _weightPoints = new WeightPoint[MaxWeightPoints];
             private int addedWeightPoints = 0;
 
-            public WeightAnalizer(Program program, Config config, CargoManager cargoManager, SystemManager systemManager)
-            {
-                _program = program;
-                _config = config;
-                _cargoManager = cargoManager;
-                _systemManager = systemManager;
+            public WeightAnalizer(ExcavOSContext context) {
+                _context = context;
             }
 
-            public void QueryData(TimeSpan time)
-            {
+            public void QueryData(TimeSpan time) {
                 Calculate();
                 CalculateCapacityDelta(time);
             }
 
-            public float GetLiftThresholdWarning()
-            {
-                return _config.LiftThresholdWarning;
+            public float GetLiftThresholdWarning() {
+                return _context.config.LiftThresholdWarning;
             }
 
-            private void Calculate()
-            {
+            private void Calculate() {
 
-                if (_systemManager.ActiveController == null)
-                {
+                if (_context.systemManager.ActiveController == null) {
                     Status = "Missing controller";
                     return;
                 }
 
-                if (_systemManager.ActiveController.CalculateShipMass().PhysicalMass == 0)
-                {
+                if (_context.systemManager.ActiveController.CalculateShipMass().PhysicalMass == 0) {
                     Status = "Grid is static";
-                    LiftThrustNeeded = 0;
-                    LiftThrustAvailable = 0;
-                    StoppingTime = 0;
-                    StoppingDistance = 0;
-                    return;
                 }
+                else {
+                    Status = "";
+                }
+                float mass = _context.systemManager.ActiveController.CalculateShipMass().PhysicalMass;
+                Vector3D direction = _context.systemManager.ActiveController.GetShipVelocities().LinearVelocity.Normalized();
+                Vector3D gravity = _context.systemManager.ActiveController.GetNaturalGravity();
+                double speed = _context.systemManager.ActiveController.GetShipSpeed();
 
-                Status = "";
-                CalculateLiftThrustUsage(_systemManager.ActiveController, _systemManager.LiftThrusters);
-                CalculateStopDistance(_systemManager.ActiveController, _systemManager.StopThrusters);
+                _context.thrusterManager.UpdateAll();
+                LiftThrustUsage = (float)CalculateLiftThrustUsage(_context.systemManager.ActiveController, _context.thrusterManager);
+                CalculateStopDistance(speed, direction, gravity, mass, _context.thrusterManager);
             }
 
-            private void CalculateLiftThrustUsage(IMyShipController controller, List<IMyThrust> thrusters)
-            {
+            private double CalculateLiftThrustUsage(IMyShipController controller, ThrusterManager thrusterGroups) {
+                double ThrustUsage = 0;
                 float mass = controller.CalculateShipMass().PhysicalMass;
-                float gravityStrength = (float)(controller.GetNaturalGravity().Length() / 9.81);                
-                LiftThrustNeeded = (mass * (float)gravityStrength / 100) * 1000;
+                Vector3D gravity = controller.GetNaturalGravity();
+                double gravitationalForce = mass * gravity.Length();
+                foreach (ThrustGroup thrustGroup in thrusterGroups.groups) {
+                    var GravAccel = Vector3D.Dot(gravity, thrustGroup.direction);
+                    if (GravAccel > 0) continue;
 
-                Vector3 gravity = controller.GetNaturalGravity();
+                    double maxAcceleration = thrustGroup.maxThrust / mass;
+                    double effectiveAcceleration = maxAcceleration + GravAccel;
 
+                    float requiredThrust = 1 - (float)(effectiveAcceleration / maxAcceleration);
 
-                LiftThrustAvailable = 0;
-                thrusters.ForEach(thruster =>
-                {
-                    if (thruster.IsWorking)
-                    {
-                        Vector3D thrusterDirection = thruster.WorldMatrix.Forward;
-                        double upDot = Vector3D.Dot(thrusterDirection, Vector3.Normalize(gravity));
-                        LiftThrustAvailable += (thruster.MaxEffectiveThrust*(float)upDot);
+                    if (ThrustUsage < requiredThrust) {
+                        ThrustUsage = requiredThrust;
                     }
-                });
-
+                }
+                return ThrustUsage;
             }
 
-            private void CalculateStopDistance(IMyShipController controller, List<IMyThrust> thrusters) 
-            {
-                float mass = controller.CalculateShipMass().PhysicalMass;
-                double stopThrustAvailable = 0;
-                int disabledThrusters = 0;
-                thrusters.ForEach(thruster =>
-                {
-                    if (!thruster.IsWorking) disabledThrusters++;
-                    if (thruster.IsFunctional)
-                    {
-                        stopThrustAvailable += thruster.MaxEffectiveThrust;
-                    }
-                });
-                StopThrustersWarning = disabledThrusters > 0;
-                double deacceleration = -stopThrustAvailable / mass;
-                double currentSpeed = controller.GetShipSpeed();
-                StoppingTime = (float)(-currentSpeed / deacceleration);
-                StoppingDistance = (float)(currentSpeed * StoppingTime + (deacceleration * StoppingTime * StoppingTime) / 2.0f);
+            private void CalculateStopDistance(double CurrentSpeed, Vector3D Direction, Vector3D Gravity, Double Mass, ThrusterManager thrustGroups) {
+
+                double effectiveAcceleration = thrustGroups.AccelerationInDirection(Direction, Gravity, Mass);
+                StoppingTime = (float)(-CurrentSpeed / effectiveAcceleration);
+                StoppingDistance = (float)(CurrentSpeed * StoppingTime + (effectiveAcceleration * StoppingTime * StoppingTime) / 2.0f);
             }
 
-            private void CalculateCapacityDelta(TimeSpan time)
-            {
-                WeightPoint wp = new WeightPoint
-                {
+            private void CalculateCapacityDelta(TimeSpan time) {
+                WeightPoint wp = new WeightPoint {
                     time = time.TotalSeconds,
-                    capacity = _cargoManager.CurrentCapacity / _cargoManager.TotalCapacity
+                    capacity = _context.cargoManager.CurrentCapacity / _context.cargoManager.TotalCapacity
                 };
 
-                if (addedWeightPoints < MaxWeightPoints)
-                {
+                if (addedWeightPoints < MaxWeightPoints) {
                     _weightPoints[addedWeightPoints] = wp;
                     addedWeightPoints++;
                     CapacityDelta = 0;
                 }
-                else
-                {
-                    for (int n = 1; n < MaxWeightPoints; n++)
-                    {
+                else {
+                    for (int n = 1; n < MaxWeightPoints; n++) {
                         _weightPoints[n - 1] = _weightPoints[n];
                     }
                     _weightPoints[MaxWeightPoints - 1] = wp;

@@ -46,7 +46,7 @@ namespace IngameScript
             public void Update(string argument, UpdateType updateSource, TimeSpan time)
             {
                 _timeAccumulator += time;
-                if (updateSource == UpdateType.Update100)
+                if ((updateSource & UpdateType.Update100) != 0)
                 {
                     _tick++;
                     
@@ -57,7 +57,7 @@ namespace IngameScript
                         Initialize();
                     }
                     
-                } else if (updateSource == UpdateType.Update10)
+                } else if ((updateSource & UpdateType.Update10) != 0)
                 {
                     _tick10++;
                     if (_tick10 % 3 == 0) {

@@ -46,25 +46,27 @@ namespace IngameScript
             public void Update(string argument, UpdateType updateSource, TimeSpan time)
             {
                 _timeAccumulator += time;
-                if (updateSource == UpdateType.Update100)
+                if ((updateSource & UpdateType.Update100) != 0)
                 {
                     _tick++;
-                    
+
                     _program.Echo($"{_scriptName} (ver. {_scriptVersion}) is running {_spinner.Substring(_tick % _spinner.Length, 1)}\nLast run time: {_program.Runtime.LastRunTimeMs}ms");
 
                     if (_tick % 5 == 0)
                     {
                         Initialize();
                     }
-                    
-                } else if (updateSource == UpdateType.Update10)
+
+                }
+                if ((updateSource & UpdateType.Update10) != 0)
                 {
                     _tick10++;
                     if (_tick10 % 3 == 0) {
                         Update10();
                     }
                     
-                } else if (argument != "")
+                } 
+                if (argument != "")
                 {
                     HandleCommand(argument);
                 }

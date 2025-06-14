@@ -26,6 +26,9 @@ namespace IngameScript {
             public string DockTag = "[Excav Parking]";
             public float LiftThresholdWarning = 0.9f;
             public float MouseSensitivity = 1f;
+            public bool AutomateThrust = true;
+            public bool AutomateStockpile = true;
+            public bool AutomateCharging = true;
 
             public Config(MyIni ini, string section) : base(ini, section) {
             }
@@ -37,7 +40,9 @@ namespace IngameScript {
                 _ini.Set(_section, "DockTag", DockTag);
                 _ini.Set(_section, "LiftThresholdWarning", LiftThresholdWarning);
                 _ini.Set(_section, "MouseSensitivity", MouseSensitivity);
-
+                _ini.Set(_section, "AutomateThrust", AutomateThrust);
+                _ini.Set(_section, "AutomateStockpile", AutomateStockpile);
+                _ini.Set(_section, "AutomateCharging", AutomateCharging);
             }
 
             public override void ReadConfig() {
@@ -47,6 +52,9 @@ namespace IngameScript {
                 DockTag = GetValue("DockTag").ToString(DockTag);
                 LiftThresholdWarning = GetValue("LiftThresholdWarning").ToSingle(LiftThresholdWarning);
                 MouseSensitivity = GetValue("MouseSensitivity").ToSingle(MouseSensitivity);
+                AutomateThrust = GetValue("AutomateThrust").ToBoolean(AutomateThrust);
+                AutomateStockpile = GetValue("AutomateStockpile").ToBoolean(AutomateStockpile);
+                AutomateCharging = GetValue("AutomateCharging").ToBoolean(AutomateCharging);
             }
         }
     }

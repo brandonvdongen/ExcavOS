@@ -40,8 +40,8 @@ namespace IngameScript {
                 this.config = config;
                 this.storage = storage;
                 cargoManager = new CargoManager(_context);
-                systemManager = new SystemManager(_context);
-                thrusterManager = new ThrusterManager(_context);
+                systemManager = new SystemManager(_context, config);
+                thrusterManager = new ThrusterManager(_context,config);
                 weightAnalizer = new WeightAnalizer(_context);
                 utilitymanager = new UtilityManager(_context);
             }

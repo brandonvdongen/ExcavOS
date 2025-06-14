@@ -70,16 +70,18 @@ namespace IngameScript {
                     if (_context.systemManager.ActiveController.CalculateShipMass().PhysicalMass == 0) {
                         _shipState = ShipState.isStatic;
                     }
-                    else {
+                    else
+                    {
                         _shipState = ShipState.isIdle;
-                        foreach (var block in _connectors.blocks) {
-                            if (block.OtherConnector != null && block.Status == MyShipConnectorStatus.Connected) {
-                                if (block.OtherConnector.CustomData.Contains(_context.config.DockTag)) {
-                                    _shipState = ShipState.isDocked;
-                                }
+                    }
+                    foreach (var block in _connectors.blocks) {
+                        if (block.OtherConnector != null && block.Status == MyShipConnectorStatus.Connected) {
+                            if (block.CustomData.Contains(_context.config.DockTag)) {
+                                _shipState = ShipState.isDocked;
                             }
                         }
                     }
+                    
                 }
                 foreach (var block in _gasTanks.blocks) {
                     if (_shipState == ShipState.isDocked) {

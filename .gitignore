@@ -1,5 +1,7 @@
 /.vs
+/.idea
 /ExcavOS/bin
 /ExcavOS/MDK/MDK.paths.props
 /ExcavOS/obj
 *.zip
+*.mdk.local.ini

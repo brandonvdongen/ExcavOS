@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcavOS", "ExcavOS\ExcavOS.csproj", "{FA00F25D-C8A8-4462-B8BF-7352C543DD82}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcavOS", "ExcavOS\ExcavOS [Dev].csproj", "{FA00F25D-C8A8-4462-B8BF-7352C543DD82}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

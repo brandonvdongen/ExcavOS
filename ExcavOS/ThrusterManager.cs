@@ -33,16 +33,18 @@ namespace IngameScript {
             public List<ThrustGroup> groups;
 
             private readonly ExcavOSContext _context;
+            private readonly Config _config;
 
-            public ThrusterManager(ExcavOSContext context) {
+            public ThrusterManager(ExcavOSContext context, Config config) {
                 _context = context;
+                _config = config;
 
-                up = new ThrustGroup(_context);
-                down = new ThrustGroup(_context);
-                left = new ThrustGroup(_context);
-                right = new ThrustGroup(_context);
-                forward = new ThrustGroup(_context);
-                backward = new ThrustGroup(_context);
+                up = new ThrustGroup(_context, _config);
+                down = new ThrustGroup(_context, _config);
+                left = new ThrustGroup(_context, _config);
+                right = new ThrustGroup(_context, _config);
+                forward = new ThrustGroup(_context, _config);
+                backward = new ThrustGroup(_context, _config);
 
                 groups = new List<ThrustGroup>();
                 groups.Add(up);
@@ -103,9 +105,11 @@ namespace IngameScript {
             public bool allWorking = false;
             public Vector3D direction;
             private readonly ExcavOSContext _context;
+            private readonly Config _config;
 
-            public ThrustGroup(ExcavOSContext context) {
+            public ThrustGroup(ExcavOSContext context, Config config) {
                 _context = context;
+                _config = config;
             }
 
             public void Update() {
@@ -117,11 +121,18 @@ namespace IngameScript {
 
                 foreach (IMyThrust thrust in thrusters) {
 
-                    if (_context.systemManager.ShipState == ShipState.isDocked || _context.systemManager.ShipState == ShipState.isStatic) {
-                        thrust.Enabled = false;
-                    }
-                    else if (_context.systemManager.ShipState == ShipState.isControlled || _context.systemManager.ShipState == ShipState.isIdle) {
-                        thrust.Enabled = thrust.MaxEffectiveThrust > 0;
+                    if (_config.AutomateThrust)
+                    {
+                        if (_context.systemManager.ShipState == ShipState.isDocked ||
+                            _context.systemManager.ShipState == ShipState.isStatic)
+                        {
+                            thrust.Enabled = false;
+                        }
+                        else if (_context.systemManager.ShipState == ShipState.isControlled ||
+                                 _context.systemManager.ShipState == ShipState.isIdle)
+                        {
+                            thrust.Enabled = thrust.MaxEffectiveThrust > 0;
+                        }
                     }
 
                     if (!thrust.IsWorking) {

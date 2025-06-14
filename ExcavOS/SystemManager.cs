@@ -83,12 +83,19 @@ namespace IngameScript {
                         }
                     }
                 }
-                foreach (var block in _gasTanks.blocks) {
-                    if (_shipState == ShipState.isDocked) {
-                        block.Stockpile = true;
-                    }
-                    else {
-                        block.Stockpile = false;
+
+                if (_config.AutomateStockpile)
+                {
+                    foreach (var block in _gasTanks.blocks)
+                    {
+                        if (_shipState == ShipState.isDocked)
+                        {
+                            block.Stockpile = true;
+                        }
+                        else
+                        {
+                            block.Stockpile = false;
+                        }
                     }
                 }
 

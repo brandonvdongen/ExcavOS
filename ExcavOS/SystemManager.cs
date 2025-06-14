@@ -24,6 +24,7 @@ namespace IngameScript {
             //public string Status;
             private readonly ExcavOSContext _context;
             //private Config _config;
+            private readonly Config _config;
             public ShipState ShipState { get { return _shipState; } }
 
             private ShipState _shipState = ShipState.isIdle;
@@ -40,8 +41,9 @@ namespace IngameScript {
             public IMyShipController ActiveController { get { return _controller; } }
 
             public IMyParachute Parachute { get { return _parachute; } }
-            public SystemManager(ExcavOSContext context) {
+            public SystemManager(ExcavOSContext context, Config config) {
                 _context = context;
+                _config = config;
                 _gyros = new BlockFinder<IMyGyro>(_context);
                 _controllers = new BlockFinder<IMyShipController>(_context);
                 _thrusters = new BlockFinder<IMyThrust>(_context);
@@ -89,12 +91,19 @@ namespace IngameScript {
                         block.Stockpile = false;
                     }
                 }
-                foreach (var block in _batteries.blocks) {
-                    if (_shipState == ShipState.isDocked) {
-                        block.ChargeMode = ChargeMode.Recharge;
-                    }
-                    else {
-                        block.ChargeMode = ChargeMode.Auto;
+
+                if (_config.AutomateCharging)
+                {
+                    foreach (var block in _batteries.blocks)
+                    {
+                        if (_shipState == ShipState.isDocked)
+                        {
+                            block.ChargeMode = ChargeMode.Recharge;
+                        }
+                        else
+                        {
+                            block.ChargeMode = ChargeMode.Auto;
+                        }
                     }
                 }
             }

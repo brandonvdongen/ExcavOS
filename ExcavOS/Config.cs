@@ -26,9 +26,9 @@ namespace IngameScript {
             public string DockTag = "[Excav Parking]";
             public float LiftThresholdWarning = 0.9f;
             public float MouseSensitivity = 1f;
-            public bool AutomateThrust;
-            public bool AutomateStockpile;
-            public bool AutomateCharging;
+            public bool AutomateThrust = true;
+            public bool AutomateStockpile = true;
+            public bool AutomateCharging = true;
 
             public Config(MyIni ini, string section) : base(ini, section) {
             }

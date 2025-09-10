@@ -25,7 +25,7 @@ namespace IngameScript {
             private readonly BlockFinder<IMyTerminalBlock> _surfaceProviders;
             private Dictionary<long, RegisteredProvider> _registeredProviders = new Dictionary<long, RegisteredProvider>();
 
-            public ExcavOS(Program program, MyIni storage) : base(program, storage, "ExcavOS", "0.2") {
+            public ExcavOS(Program program, MyIni storage) : base(program, storage, "ExcavOS", "0.3") {
                 _context = new ExcavOSContext(program, _config, _storage);
                 _surfaceProviders = new BlockFinder<IMyTerminalBlock>(_context);
 

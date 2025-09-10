@@ -56,12 +56,14 @@ namespace IngameScript {
             }
 
             public void Save() {
+                _context.storage.Set(sectionKey, "GAS", GravityAlign);
                 _context.storage.Set(sectionKey, "GAP", GravityAlignPitch);
                 _context.storage.Set(sectionKey, "CruiseTarget", CruiseTarget);
             }
 
             protected void Initialize() {
                 GravityAlignPitch = (float)_context.storage.Get(sectionKey, "GAP").ToDouble(0);
+                GravityAlign = (bool)_context.storage.Get(sectionKey, "GAS").ToBoolean();
                 CruiseTarget = (float)_context.storage.Get(sectionKey, "CruiseTarget").ToDouble(0);
             }
 

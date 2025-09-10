@@ -32,7 +32,7 @@ namespace IngameScript {
                 using (var frame = surface.DrawFrame()) {
                     Painter.SetCurrentSurfaceAndFrame(surface, frame);
 
-                    bool roverMode = _context.thrusterManager.down.thrusters.Count == 0;
+                    bool roverMode = _context.thrusterManager.up.thrusters.Count == 0;
                     float liftUsage = _context.weightAnalizer.LiftThrustUsage;
                     float cargoUsage = (float)(_context.cargoManager.CurrentCapacity / _context.cargoManager.TotalCapacity);
                     float margin = 20.0f;

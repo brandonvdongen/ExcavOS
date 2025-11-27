@@ -153,6 +153,9 @@ namespace IngameScript {
                 double effectiveThrust = 0;
                 foreach (IMyThrust thrust in thrusters) {
                     effectiveThrust += Vector3D.Dot(direction, thrust.WorldMatrix.Backward) * thrust.MaxEffectiveThrust;
+                    if (thrust.IsWorking) {
+                        effectiveThrust += Vector3D.Dot(direction, thrust.WorldMatrix.Backward) * thrust.MaxEffectiveThrust;
+                    }
                 }
                 double effectiveAcceleration = effectiveThrust / mass;
 
